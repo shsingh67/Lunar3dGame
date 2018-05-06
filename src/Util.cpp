@@ -1,5 +1,5 @@
 
-// Kevin M.Smith - CS 134 SJSU
+// Sharandeep Singh - CS 134 sjsu
 
 #include "Util.h"
 
