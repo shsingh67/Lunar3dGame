@@ -34,7 +34,7 @@ void ofApp::setup(){
     sys.add(ship);
     
     sys.addForce(&thruster);
-    sys.addForce(new GravityForce(ofVec3f(0, -.0162, 0)));
+    sys.addForce(new GravityForce(ofVec3f(0, -.162, 0)));
     //sys.addForce(&gravityForce);
     
     //set the type of explosion for the engine emitter
@@ -44,7 +44,7 @@ void ofApp::setup(){
     engine.setOneShot(true);
     engine.setGroupSize(200);
     engine.setVelocity(ofVec3f(0,0,0));
-    engine.sys->addForce(new GravityForce(ofVec3f(0, -5, 0)));
+    engine.sys->addForce(new GravityForce(ofVec3f(0, -6, 0)));
 }
 
 //--------------------------------------------------------------
@@ -53,7 +53,7 @@ void ofApp::update(){
     
     sys.update();
     
-    if(count == 100) {
+    if(count == 50) {
     engine.sys->reset();
     engine.start();
     count = 0;
