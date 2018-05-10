@@ -27,7 +27,7 @@ class ofApp : public ofBaseApp{
 		void gotMessage(ofMessage msg);
     
         ofEasyCam cam;
-        ofxAssimpModelLoader moon, lander;
+        ofxAssimpModelLoader moon, lander; 
     
         bool bAltKeyDown;
         bool bCtrlKeyDown;
@@ -39,13 +39,13 @@ class ofApp : public ofBaseApp{
         bool bLanderLoaded;
         bool bTerrainSelected;
     
+    
         void initLightingAndMaterials();
     
         Particle ship;
         ParticleEmitter engine;
         ParticleSystem sys;
         ThrusterForce thruster;
-        GravityForce gravityForce;
     
         ofxPanel gui;
         ofxFloatSlider gravity;

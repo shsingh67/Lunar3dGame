@@ -28,19 +28,19 @@ void ofApp::setup(){
     lander.loadModel("geo/lander.obj");
     lander.setScaleNormalization(false);
     
-    // Create a lonely parcitle for and a thrust force to it
+    // Create a lonely particle for and a thrust force to it
     ship.lifespan = 10000;
     ship.position.set(0,2.5,0);
     sys.add(ship);
     
     sys.addForce(&thruster);
     sys.addForce(new GravityForce(ofVec3f(0, -.162, 0)));
-    //sys.addForce(&gravityForce);
-    
+  
     //set the type of explosion for the engine emitter
     engine.setLifespan(.7);
     engine.setParticleRadius(.04);
-    engine.sys->addForce(new ImpulseRadialForce(200));
+    engine.sys->addForce(new TurbulenceForce(ofVec3f(-2, -1, -3), ofVec3f(1, 2, 5)));
+    engine.sys->addForce(new ImpulseRadialForce(150));
     engine.setOneShot(true);
     engine.setGroupSize(200);
     engine.setVelocity(ofVec3f(0,0,0));
@@ -53,7 +53,8 @@ void ofApp::update(){
     
     sys.update();
     
-    if(count == 50) {
+    
+    if(count == 65) {
     engine.sys->reset();
     engine.start();
     count = 0;
@@ -63,7 +64,6 @@ void ofApp::update(){
     
     engine.setPosition(sys.particles[0].position);
     lander.setPosition(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z);
-
 }
 
 //--------------------------------------------------------------
@@ -80,6 +80,7 @@ void ofApp::draw(){
     sys.draw();
     engine.draw();
     
+    
     if(bWireframe) {
         ofDisableLighting();
         ofSetColor(ofColor::slateGray);
@@ -87,12 +88,13 @@ void ofApp::draw(){
         
         //code for loading rover
         lander.drawWireframe();
-    
+        
     } else {
         ofEnableLighting();
         moon.drawFaces();
         //
         lander.drawFaces();
+
     }
     
     ofPopMatrix();
@@ -107,8 +109,9 @@ void ofApp::keyPressed(int key){
             ofToggleFullscreen();
             break;
         case OF_KEY_UP:
-           
             thruster.add(ofVec3f(0, .5, 0));
+            engine.sys->reset();
+            engine.start();
             break;
         case OF_KEY_DOWN:
             
@@ -138,7 +141,7 @@ void ofApp::keyPressed(int key){
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
     thruster.set(ofVec3f(0, 0, 0));
-   // engine.stop();
+    engine.stop();
 }
 
 //--------------------------------------------------------------
