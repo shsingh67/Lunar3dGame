@@ -29,12 +29,31 @@ void ofApp::setup(){
     
     lander.loadModel("geo/lander.obj");
     lander.setScaleNormalization(false);
-
+    
+    // texture loading
+    //
+    ofDisableArbTex();     // disable rectangular textures
+    
+    // load textures
+    //
+    if (!ofLoadImage(particleTex, "images/dot.png")) {
+        cout << "Particle Texture File: images/dot.png not found" << endl;
+        ofExit();
+    }
+    
+   //load shader
+#ifdef TARGET_OPENGLES
+    shader.load("shaders_gles/shader");
+#else
+    shader.load("shaders/shader");
+#endif
+    
 	thrust.loadSound("sounds/thrust.mp3");
 	thrust.setLoop(true);
     
     // Create a lonely parcitle for and a thrust force to it
     ship.lifespan = 10000;
+    ship.visible = false;
     ship.position.set(0,20,0);
     sys.add(ship);
     
@@ -44,20 +63,23 @@ void ofApp::setup(){
     
     //set the type of explosion for the engine emitter
     engine.setLifespan(.7);
-    engine.setParticleRadius(.04);
+    engine.setParticleRadius(10);
     engine.sys->addForce(new ImpulseRadialForce(150));
     engine.setOneShot(true);
-    engine.setGroupSize(200);
+    engine.setGroupSize(500);
     engine.setVelocity(ofVec3f(0,0,0));
     engine.sys->addForce(new GravityForce(ofVec3f(0, -6, 0)));
 
 	cam.setPosition(20, 20, 20);
 	cam.lookAt(ofVec3f(0,20,0));
-	
+    
+
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
+    loadVbo();
+    
 	landerX = lander.getPosition().x;
 	landerY = lander.getPosition().y;
 	landerZ = lander.getPosition().z;
@@ -65,13 +87,17 @@ void ofApp::update(){
     count++;
     
     sys.update();
-    
-    if(count == 65) {
-    engine.sys->reset();
-    engine.start();
-    count = 0;
+
+    if(!down) {
+        if(count == 65) {
+            engine.sys->reset();
+            engine.start();
+        }
+        if(count >= 65) {
+            count = 0;
+        }
     }
-    
+
     engine.update();
     
     engine.setPosition(sys.particles[0].position);
@@ -92,12 +118,13 @@ void ofApp::update(){
 		cam.setPosition(ofVec3f(landerX+1, landerY+5, landerZ+1));
 		cam.lookAt(ofVec3f(landerX+50, landerY, landerZ+50));
 	}
-
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+    
+    //loadVbo();
     ofBackground(ofColor::black);
     
     if(!bHide) {
@@ -108,8 +135,9 @@ void ofApp::draw(){
     ofPushMatrix();
     ofSetColor(ofColor::dimGrey);
     sys.draw();
-    engine.draw();
-    
+   // engine.draw();
+   
+
     if(bWireframe) {
         ofDisableLighting();
         ofSetColor(ofColor::slateGray);
@@ -127,7 +155,40 @@ void ofApp::draw(){
     
     ofPopMatrix();
     cam.end();
+    
+    glDepthMask(GL_FALSE);
+    
+    ofSetColor(255, 100, 90);
+    
+    // this makes everything look glowy :)
+    //
+    ofEnableBlendMode(OF_BLENDMODE_ADD);
+    ofEnablePointSprites();
 
+    
+    // begin drawing in the camera
+    //
+    shader.begin();
+    cam.begin();
+
+    // draw particle emitter here..
+    //
+    particleTex.bind();
+    vbo.draw(GL_POINTS, 0, (int)engine.sys->particles.size());
+    particleTex.unbind();
+
+    //  end drawing in the camera
+    //
+    cam.end();
+    shader.end();
+
+    ofDisablePointSprites();
+    ofDisableBlendMode();
+    ofEnableAlphaBlending();
+
+    // set back the depth mask
+    //
+    glDepthMask(GL_TRUE);
 
 }
 
@@ -148,6 +209,7 @@ void ofApp::keyPressed(int key){
         case OF_KEY_DOWN:
 			thrust.play();
             thruster.add(ofVec3f(0, -.5, 0));
+            down = true;
             break;
         case OF_KEY_LEFT:
 			thrust.play();
@@ -189,6 +251,11 @@ void ofApp::keyReleased(int key){
     thruster.set(ofVec3f(0, 0, 0));
 	thrust.stop();
    // engine.stop();
+    switch(key) {
+        case OF_KEY_DOWN:
+    down = false;
+    break;
+    }
 }
 
 //--------------------------------------------------------------
@@ -271,6 +338,25 @@ void ofApp::initLightingAndMaterials() {
     glEnable(GL_LIGHT0);
     //    glEnable(GL_LIGHT1);
     glShadeModel(GL_SMOOTH);
+}
+//----------------------------------------------------------
+// load vertex buffer in preparation for rendering
+//
+void ofApp::loadVbo() {
+    if (engine.sys->particles.size() < 1) return;
+    
+    vector<ofVec3f> sizes;
+    vector<ofVec3f> points;
+    for (int i = 0; i < engine.sys->particles.size(); i++) {
+        points.push_back(engine.sys->particles[i].position);
+        sizes.push_back(ofVec3f(engine.sys->particles[i].radius));
+    }
+    // upload the data to the vbo
+    //
+    int total = (int)points.size();
+    vbo.clear();
+    vbo.setVertexData(&points[0], total, GL_STATIC_DRAW);
+    vbo.setNormalData(&sizes[0], total, GL_STATIC_DRAW);
 }
 
 

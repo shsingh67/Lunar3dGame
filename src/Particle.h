@@ -21,7 +21,7 @@ public:
 	void    draw();
 	float   age();        // sec
 	ofColor color;
-    
+    bool visible = true;
     void setVelocity(const ofVec3f &vel) { velocity = vel; }
 };
 

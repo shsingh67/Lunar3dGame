@@ -26,6 +26,7 @@ class ofApp : public ofBaseApp{
 		void windowResized(int w, int h);
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
+        void loadVbo();
 
     
         ofEasyCam cam;
@@ -61,6 +62,17 @@ class ofApp : public ofBaseApp{
 		float landerY;
 		float landerZ;
     
+        // textures
+        //
+        ofTexture  particleTex;
+    
+        // shaders
+        //
+        ofVbo vbo;
+        ofShader shader;
+    
+    
         int count = 0;
+        int down = false;
 };
 
