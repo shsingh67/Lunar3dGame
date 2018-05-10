@@ -25,8 +25,10 @@ class ofApp : public ofBaseApp{
 		void windowResized(int w, int h);
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
+
     
         ofEasyCam cam;
+
         ofxAssimpModelLoader moon, lander;
     
         bool bAltKeyDown;
@@ -40,15 +42,23 @@ class ofApp : public ofBaseApp{
         bool bTerrainSelected;
     
         void initLightingAndMaterials();
+
     
         Particle ship;
         ParticleEmitter engine;
         ParticleSystem sys;
         ThrusterForce thruster;
         GravityForce gravityForce;
+
+		ofSoundPlayer thrust;
     
         ofxPanel gui;
         ofxFloatSlider gravity;
+
+		float currentCam;
+		float landerX;
+		float landerY;
+		float landerZ;
     
         int count = 0;
 };

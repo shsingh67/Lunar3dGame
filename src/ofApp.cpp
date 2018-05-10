@@ -17,6 +17,7 @@ void ofApp::setup(){
     cam.setDistance(10);
     cam.setNearClip(.1);
     cam.setFov(65.5);
+
     ofSetVerticalSync(true);
     ofEnableSmoothing();
     ofEnableDepthTest();
@@ -27,10 +28,13 @@ void ofApp::setup(){
     
     lander.loadModel("geo/lander.obj");
     lander.setScaleNormalization(false);
+
+	thrust.loadSound("sounds/thrust.mp3");
+	thrust.setLoop(true);
     
     // Create a lonely parcitle for and a thrust force to it
     ship.lifespan = 10000;
-    ship.position.set(0,2.5,0);
+    ship.position.set(0,20,0);
     sys.add(ship);
     
     sys.addForce(&thruster);
@@ -45,10 +49,18 @@ void ofApp::setup(){
     engine.setGroupSize(200);
     engine.setVelocity(ofVec3f(0,0,0));
     engine.sys->addForce(new GravityForce(ofVec3f(0, -6, 0)));
+
+	cam.setPosition(20, 20, 20);
+	cam.lookAt(ofVec3f(0,20,0));
+	
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
+	landerX = lander.getPosition().x;
+	landerY = lander.getPosition().y;
+	landerZ = lander.getPosition().z;
+
     count++;
     
     sys.update();
@@ -63,6 +75,23 @@ void ofApp::update(){
     
     engine.setPosition(sys.particles[0].position);
     lander.setPosition(sys.particles[0].position.x, sys.particles[0].position.y, sys.particles[0].position.z);
+
+	if (currentCam == 1) {
+		
+	}
+	if (currentCam == 2) {
+		cam.setPosition(20, 20, 20);
+		cam.lookAt(lander.getPosition());
+	}
+	if (currentCam == 3) {
+		cam.setPosition(lander.getPosition());
+		cam.lookAt(ofVec3f(landerX, 0, landerZ));
+	}
+	if (currentCam == 4) {
+		cam.setPosition(ofVec3f(landerX+1, landerY+5, landerZ+1));
+		cam.lookAt(ofVec3f(landerX+50, landerY, landerZ+50));
+	}
+
 
 }
 
@@ -97,47 +126,65 @@ void ofApp::draw(){
     
     ofPopMatrix();
     cam.end();
+
+
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
+	
     switch (key) {
         case 'F':
         case 'f':
             ofToggleFullscreen();
             break;
         case OF_KEY_UP:
-           
+			thrust.play();
             thruster.add(ofVec3f(0, .5, 0));
             break;
         case OF_KEY_DOWN:
-            
+			thrust.play();
             thruster.add(ofVec3f(0, -.5, 0));
             break;
         case OF_KEY_LEFT:
-            
+			thrust.play();
             thruster.add(ofVec3f(-.5, 0, 0));
             break;
         case OF_KEY_RIGHT:
-          
+			thrust.play();
             thruster.add(ofVec3f(.3, 0, 0));
             break;
             
         case OF_KEY_LEFT_SHIFT:
+			thrust.play();
             thruster.add(ofVec3f(0, 0, -5));
             break;
             
         case OF_KEY_RIGHT_SHIFT:
+			thrust.play();
             thruster.add(ofVec3f(0, 0, 3));
             break;
         case 'h':
             break;
+		case '1':
+			currentCam = 1;
+			break;
+		case '2':
+			currentCam = 2;
+			break;
+		case '3':
+			currentCam = 3;
+			break;
+		case '4':
+			currentCam = 4;
+			break;
     }
 }
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
     thruster.set(ofVec3f(0, 0, 0));
+	thrust.stop();
    // engine.stop();
 }
 
