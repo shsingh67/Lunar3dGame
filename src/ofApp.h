@@ -51,6 +51,7 @@ class ofApp : public ofBaseApp{
         GravityForce gravityForce;
 
 		ofSoundPlayer thrust;
+		ofSoundPlayer background;
     
         ofxPanel gui;
         ofxFloatSlider gravity;
