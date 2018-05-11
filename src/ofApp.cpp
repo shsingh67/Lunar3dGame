@@ -59,8 +59,7 @@ void ofApp::setup(){
     
     sys.addForce(&thruster);
     sys.addForce(new GravityForce(ofVec3f(0, -.162, 0)));
-    //sys.addForce(&gravityForce);
-    
+   
     //set the type of explosion for the engine emitter
     engine.setLifespan(.7);
     engine.setParticleRadius(10);
@@ -97,6 +96,8 @@ void ofApp::setup(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
+    
+    if(!bCollision) {
     loadVbo();
     
 	landerX = lander.getPosition().x;
@@ -137,15 +138,21 @@ void ofApp::update(){
 		cam.setPosition(ofVec3f(landerX+1, landerY+5, landerZ+1));
 		cam.lookAt(ofVec3f(landerX+50, landerY, landerZ+50));
 	}
-    
      bool val = collision(lander.getPosition(),root, 11, 1);
-    
+        
+    } else {
+        ship.setVelocity(ofVec3f(0,0,0));
+        thruster.set(ofVec3f(0,0,0));
+        engine.stop();
+        //bCollision = false;
+    }
+ 
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
     
-    //loadVbo();
+   // loadVbo();
     ofBackground(ofColor::black);
     
     if(!bHide) {
@@ -496,8 +503,9 @@ bool ofApp::collision(ofVec3f position,  Node node, int numLevels, int level ) {
     if(level == 10 ){
         if(node.box.inside(Vector3(position.x, position.y, position.z))){
             bCollision = true;
+        } else {
+        // bCollision = false;
         }
-        bCollision = false;
         
     }
     level++;
