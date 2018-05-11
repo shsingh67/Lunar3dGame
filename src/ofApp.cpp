@@ -63,9 +63,9 @@ void ofApp::setup(){
     //set the type of explosion for the engine emitter
     engine.setLifespan(.7);
     engine.setParticleRadius(10);
-    engine.sys->addForce(new ImpulseRadialForce(150));
+    engine.sys->addForce(new ImpulseRadialForce(110));
     engine.setOneShot(true);
-    engine.setGroupSize(500);
+    engine.setGroupSize(100);
     engine.setVelocity(ofVec3f(0,0,0));
     engine.sys->addForce(new GravityForce(ofVec3f(0, -6, 0)));
 
