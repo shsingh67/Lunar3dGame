@@ -73,7 +73,26 @@ void ofApp::setup(){
 	cam.setPosition(20, 20, 20);
 	cam.lookAt(ofVec3f(0,20,0));
     
-
+    // setup for octTree
+    boundingBox = meshBounds(moon.getMesh(0));
+    bCollision = false;
+    
+    mesh = moon.getMesh(0); // getting the mesh from mars data
+    int numIndex = mesh.getNumIndices();
+    int numberOfVertex = mesh.getNumVertices();
+    for(int i = 0; i < numberOfVertex;i++){
+        indexList.push_back(i);
+    }
+    
+    
+    
+    // cout << mesh.getVertex(indexList.at(100000));
+    root.box = boundingBox;
+    vector<Node> children1;
+    root.children = children1;
+    root.vertices = indexList;
+    createOctree(root,12,1);
+    cout<< "created octree"<<endl;
 }
 
 //--------------------------------------------------------------
@@ -118,6 +137,8 @@ void ofApp::update(){
 		cam.setPosition(ofVec3f(landerX+1, landerY+5, landerZ+1));
 		cam.lookAt(ofVec3f(landerX+50, landerY, landerZ+50));
 	}
+    
+     bool val = collision(lander.getPosition(),root, 11, 1);
     
 }
 
@@ -357,6 +378,134 @@ void ofApp::loadVbo() {
     vbo.clear();
     vbo.setVertexData(&points[0], total, GL_STATIC_DRAW);
     vbo.setNormalData(&sizes[0], total, GL_STATIC_DRAW);
+}
+//-----------------------
+void ofApp::createOctree(Node& rootNode, int numLevels, int level){
+    if (level >= numLevels) return;
+    vector<Box> child;
+    subDivideBox8(rootNode.box, child);
+    for(int i = 0; i < child.size();i++){
+        Box childBox = child.at(i);
+        vector<Node> emptyChildren;
+        vector<int> childVertices;
+        int count = getMeshPointsInBox(mesh, rootNode.vertices, childBox, childVertices);
+        
+        if(count >= 30){
+            Node* node = new Node(childBox,childVertices,emptyChildren);
+            rootNode.addChild(*node);}
+    }
+    level++;
+    for(int i = 0; i <rootNode.children.size();i++){
+        createOctree(rootNode.children.at(i), numLevels, level);
+    }
+}
+//------------------------
+// return a Mesh Bounding Box for the entire Mesh
+//
+Box ofApp::meshBounds(const ofMesh & mesh) {
+    int n = mesh.getNumVertices();
+    ofVec3f v = mesh.getVertex(0);
+    ofVec3f max = v;
+    ofVec3f min = v;
+    for (int i = 1; i < n; i++) {
+        ofVec3f v = mesh.getVertex(i);
+        
+        if (v.x > max.x) max.x = v.x;
+        else if (v.x < min.x) min.x = v.x;
+        
+        if (v.y > max.y) max.y = v.y;
+        else if (v.y < min.y) min.y = v.y;
+        
+        if (v.z > max.z) max.z = v.z;
+        else if (v.z < min.z) min.z = v.z;
+    }
+    return Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
+}
+//------------------------
+//draw a box from a "Box" class
+//
+void ofApp::drawBox(const Box &box) {
+    Vector3 min = box.parameters[0];
+    Vector3 max = box.parameters[1];
+    Vector3 size = max - min;
+    Vector3 center = size / 2 + min;
+    ofVec3f p = ofVec3f(center.x(), center.y(), center.z());
+    float w = size.x();
+    float h = size.y();
+    float d = size.z();
+    ofDrawBox(p, w, h, d);
+}
+//--------------------------
+//  Subdivide a Box into eight(8) equal size boxes, return them in boxList;
+// takes box, and returns 8 boxes in a vector
+//
+void ofApp::subDivideBox8(const Box &box, vector<Box> & boxList) {
+    Vector3 min = box.parameters[0];
+    Vector3 max = box.parameters[1];
+    Vector3 size = max - min;
+    Vector3 center = size / 2 + min;
+    float xdist = (max.x() - min.x()) / 2;
+    float ydist = (max.y() - min.y()) / 2;
+    float zdist = (max.z() - min.z()) / 2;
+    Vector3 h = Vector3(0, ydist, 0);
+    
+    //  generate ground floor
+    //
+    Box b[8];
+    b[0] = Box(min, center);
+    b[1] = Box(b[0].min() + Vector3(xdist, 0, 0), b[0].max() + Vector3(xdist, 0, 0));
+    b[2] = Box(b[1].min() + Vector3(0, 0, zdist), b[1].max() + Vector3(0, 0, zdist));
+    b[3] = Box(b[2].min() + Vector3(-xdist, 0, 0), b[2].max() + Vector3(-xdist, 0, 0));
+    
+    boxList.clear();
+    for (int i = 0; i < 4; i++)
+        boxList.push_back(b[i]);
+    
+    // generate second story
+    //
+    for (int i = 4; i < 8; i++) {
+        b[i] = Box(b[i - 4].min() + h, b[i - 4].max() + h);
+        boxList.push_back(b[i]);
+    }
+    
+    
+}
+//-----------------------------// getMeshPointsInBox:  return an array of indices to points in mesh that are contained
+//                      inside the Box.  Return count of points found;
+
+int ofApp::getMeshPointsInBox(const ofMesh & mesh, const vector<int>& points,
+                              Box & box, vector<int> & pointsRtn)
+{
+    int count = 0;
+    for (int i = 0; i < points.size(); i++) {
+        ofVec3f v = mesh.getVertex(points[i]);
+        if (box.inside(Vector3(v.x, v.y, v.z))) {
+            count++;
+            pointsRtn.push_back(points[i]);
+        }
+    }
+    return count;
+}
+
+//---------------------------
+bool ofApp::collision(ofVec3f position,  Node node, int numLevels, int level ) {
+    
+    
+    if (level >= numLevels) return;
+    
+    if(level == 10 ){
+        if(node.box.inside(Vector3(position.x, position.y, position.z))){
+            bCollision = true;
+        }
+        bCollision = false;
+        
+    }
+    level++;
+    
+    for (int i = 0; i < node.children.size(); i++) {
+        collision(position, node.children[i], numLevels, level);
+    }
+    return false;
 }
 
 
